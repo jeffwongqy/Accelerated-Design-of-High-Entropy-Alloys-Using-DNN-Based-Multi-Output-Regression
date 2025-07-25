@@ -1,0 +1,1 @@
+# Accelerated-Design-of-High-Entropy-Alloys-Using-DNN-Based-Multi-Output-Regression
