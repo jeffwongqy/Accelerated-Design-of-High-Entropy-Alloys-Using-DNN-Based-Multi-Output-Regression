@@ -1,4 +1,4 @@
-# A*STAR Cloud-Based Deployment of a DNN Multi-Output Regression Model for High Entropy Alloy Design on AWS
+# Cloud-Based Deployment of a DNN Multi-Output Regression Model for High Entropy Alloy Design on AWS
 
 <img width="1216" height="631" alt="HEAs ML" src="https://github.com/user-attachments/assets/39abae69-d683-487e-86b4-3a6b09bc99c3" />
 
