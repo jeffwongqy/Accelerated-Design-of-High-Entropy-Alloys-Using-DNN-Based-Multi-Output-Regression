@@ -277,6 +277,3 @@ plt.close()
 # save model and scaler
 joblib.dump(best_model, "best_model.joblib")
 joblib.dump(scaler2, "scaler.joblib")
-
-
-print(hea_df.iloc[:, :10].describe())
