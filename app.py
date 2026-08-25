@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import joblib 
-from sklearn.preprocessing import StandardScaler
+import time
 
 # import data and scaler
 model = joblib.load("best_model.joblib")
@@ -44,8 +44,16 @@ input_data_scaled = scaler.transform(input_data)
 if st.button("Predict"):
     prediction = model.predict(input_data_scaled)
     
-    st.success("Prediction Completed!")
+    with st.spinner(text = "In progress"):
+        time.sleep(5)
+        st.success("Prediction Done!")
     
-    st.write("Yield Strength: {:.2f} MPa".format(prediction[0][0]))
-    st.write("Ultimate Tensile Strength: {:.2f} MPa".format(prediction[0][1]))
-    st.write("Elongation: {:.2f}%".format(prediction[0][2]))
+    colA, colB, colC = st.columns(3)
+    with colA:
+        st.metric(label = "Yield Strength", value = "{:.2f} MPa".format(prediction[0][0]))
+    
+    with colB:
+        st.metric(label = "Ultimate Tensile Strength", value = "{:.2f} MPa".format(prediction[0][1]))
+    
+    with colC:
+        st.metric(label = "Elongation", value = "{:.2f} %".format(prediction[0][2]))
