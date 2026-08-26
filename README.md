@@ -361,5 +361,22 @@ joblib.dump(best_model, "best_model.joblib")
 joblib.dump(scaler2, "scaler.joblib")
 ```
 
+## 14. Discussion 
+
+<img width="1402" height="377" alt="Screenshot 2026-08-26 094428" src="https://github.com/user-attachments/assets/3401fb78-b10f-40e0-8047-0c0c537ae5cf" />
+
+
+The Gradient Boosting model demonstrated strong predictive performance for the three mechanical properties of the high-entropy alloys. The results show a close relationship between the actual and predicted values, with most data points distributed close to the expected diagonal trend.
+
+For yield strength (YS), the model achieved a training R² of 0.99 with an RMSE of 35.13 MPa, while the testing dataset achieved an R² of 0.94 and an RMSE of 106.43 MPa. The high testing R² indicates that the model can explain approximately 94% of the variation in the observed yield strength. Although several testing points show larger deviations from the main trend, the overall prediction accuracy remains strong.
+
+For ultimate tensile strength (UTS), the model produced a training R² of 0.99 and RMSE of 30.13 MPa. On the testing dataset, the R² decreased slightly to 0.91, with an RMSE of 99.98 MPa. The scatter plot shows that most predictions follow the actual UTS values closely. However, several testing observations, particularly at higher UTS values, exhibit noticeable deviations. Nevertheless, an R² of 0.91 demonstrates that the model provides a strong prediction of UTS.
+
+The prediction of elongation (El) was comparatively weaker. The training results achieved an R² of 0.97 and RMSE of 3.85%, whereas the testing results achieved an R² of 0.81 and RMSE of 10.90%. The larger difference between training and testing performance suggests that the model has more difficulty generalising elongation to unseen HEA compositions. Several testing points show substantial deviations from the overall trend, including observations at both low and high elongation values.
+
+Overall, the model performed best for yield strength, followed by ultimate tensile strength, while elongation was the most challenging property to predict. The reduction in R² from training to testing, particularly for elongation, also indicates some degree of overfitting. Nevertheless, the testing R² values of 0.94 for YS, 0.91 for UTS, and 0.81 for elongation demonstrate that the developed machine learning approach can effectively capture the relationships between the selected HEA descriptors and their mechanical properties.
+
+
+
 ## References
 [1] Wang, J., Kwon, H., Kim, H. S., & Lee, B.-J. (2023). A neural network model for high entropy alloy design. Npj Computational Materials, 9(1). https://doi.org/10.1038/s41524-023-01010-x
