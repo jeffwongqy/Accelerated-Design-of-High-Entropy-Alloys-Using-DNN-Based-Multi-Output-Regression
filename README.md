@@ -361,7 +361,31 @@ joblib.dump(best_model, "best_model.joblib")
 joblib.dump(scaler2, "scaler.joblib")
 ```
 
-## 14. Discussion 
+## 14. Docker Image Development
+Docker was used to package the machine learning application and its required software dependencies into a portable environment. The Docker image contains the Python environment, machine learning libraries, application files, trained model, scaler, and Streamlit configuration required to run the HEA prediction system.
+
+Containerising the application helps ensure that the same software environment can be used across different systems without manually installing the required Python packages. This is particularly useful for deploying the machine learning model developed in this study.
+
+<img width="1917" height="1016" alt="docker_image" src="https://github.com/user-attachments/assets/354f266b-4ffd-402e-b97c-4cc178e6f1f2" />
+
+## 15. Docker Container
+A Docker container was created from the built Docker image to run the HEA mechanical-property prediction application. The container provides an isolated runtime environment in which the Streamlit application and trained Gradient Boosting model can operate.
+
+The containerised approach separates the application environment from the host operating system and makes the system easier to reproduce, test, and deploy. The saved best_model.joblib and scaler.joblib files can be included in the container so that predictions can be generated without retraining the model.
+
+<img width="1917" height="1016" alt="docker_container_app" src="https://github.com/user-attachments/assets/62516aed-4dc5-4f85-98ce-55ff111f5e9d" />
+
+## 16. Streamlit Application 
+A Streamlit application was developed to provide a simple user interface for the machine learning model. Instead of requiring users to execute the Python training script directly, the application provides an interactive platform for entering or selecting the required HEA material descriptors and obtaining predicted mechanical properties.
+
+The trained model can generate predictions for yield strength (YS), ultimate tensile strength (UTS), and elongation (El). The saved scaler is applied to input features before they are passed to the trained model, ensuring that new data undergoes the same scaling procedure used during model development.
+
+The Streamlit interface therefore provides a practical demonstration of how the developed materials informatics model can be converted from a research-oriented Python workflow into an accessible prediction application.
+
+<img width="1917" height="1017" alt="hea_web_app" src="https://github.com/user-attachments/assets/91e2d37b-2710-44ba-8b3d-f17e1ab7a4bd" />
+
+
+## 17. Discussion 
 
 <img width="1402" height="377" alt="Screenshot 2026-08-26 094428" src="https://github.com/user-attachments/assets/3401fb78-b10f-40e0-8047-0c0c537ae5cf" />
 
@@ -376,6 +400,23 @@ The prediction of elongation (El) was comparatively weaker. The training results
 
 Overall, the model performed best for yield strength, followed by ultimate tensile strength, while elongation was the most challenging property to predict. The reduction in R² from training to testing, particularly for elongation, also indicates some degree of overfitting. Nevertheless, the testing R² values of 0.94 for YS, 0.91 for UTS, and 0.81 for elongation demonstrate that the developed machine learning approach can effectively capture the relationships between the selected HEA descriptors and their mechanical properties.
 
+## 18. Strengths and Limitations
+The implemented workflow provides a structured machine learning approach for HEA mechanical-property prediction. One of its main strengths is the combination of feature selection and nonlinear regression. Multi-Task Lasso reduces the initial descriptor space before Gradient Boosting is applied, potentially improving computational efficiency and reducing the influence of irrelevant variables.
+
+The use of multi-output modelling is also relevant to HEA research because yield strength, ultimate tensile strength, and elongation are related aspects of mechanical performance. Predicting these three properties within one modelling workflow provides a more comprehensive assessment of a candidate alloy than predicting only one mechanical property.
+
+The five-fold cross-validation and grid-search procedure further improves the robustness of model selection compared with simply choosing arbitrary Gradient Boosting parameters. In addition, fitting the final feature scaler only on the training data helps prevent direct information leakage from the testing dataset.
+
+However, several limitations should be recognised. First, the numerical model performance cannot be assessed from the Python source code alone because the actual execution results are not provided. Second, the outlier procedure uses a relatively strict 1 × IQR threshold, which may remove valid extreme HEA compositions. Third, the train-test evaluation relies on a single 75:25 split. Although five-fold cross-validation is used during hyperparameter optimisation, the final reported test performance still depends on the particular random split.
+
+Another limitation is that the current workflow does not explicitly provide uncertainty estimates for predictions. For materials screening, uncertainty information could be valuable because a model prediction with high confidence is more useful for decision-making than a prediction with an unknown error range.
+
+## 19. Conclusion
+This study implements a complete machine learning workflow for predicting the mechanical properties of high-entropy alloys from material descriptors. The pipeline begins with dataset inspection and cleaning, followed by IQR-based outlier removal and Multi-Task Lasso feature selection. The selected features are divided into training and testing datasets using a 75:25 split and scaled using MinMaxScaler.
+
+A MultiOutput Gradient Boosting Regression model is then trained and optimised using five-fold GridSearchCV. The model searches across different numbers of estimators, learning rates, and tree depths to identify the best configuration. Performance is evaluated separately for yield strength, ultimate tensile strength, and elongation using R² and RMSE on both training and testing data.
+
+The workflow also generates actual-versus-predicted plots and saves the final trained model and scaler using Joblib. Overall, the implementation provides a reproducible foundation for data-driven mechanical-property prediction and future HEA materials screening. The next stage would be to execute the complete pipeline and report the selected features, number of removed outliers, optimal Gradient Boosting parameters, cross-validation score, and the final training and testing R²/RMSE values for all three mechanical properties.
 
 
 ## References
