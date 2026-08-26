@@ -149,8 +149,217 @@ print("Dropped Features: {}".format(dropped_features))
 # keep on selected features and target variables 
 hea_df = pd.concat([hea_df[selected_features], hea_df[['YS(Mpa)', 'UTS(Mpa)', 'El(%)']]], axis = 1)
 ```
-## 5. 
+## 5. Training and Testing Dataset
 
+After feature selection, the dataset is divided into training and testing subsets using a 75:25 split.
+
+The three mechanical properties remain as a multi-output target dataframe. This ensures that YS, UTS, and elongation are evaluated for the same observations in the testing set.
+
+The use of a fixed random state improves reproducibility because the same observations will be assigned to the training and testing sets when the program is rerun.
+
+```python
+# split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(hea_df.drop(columns = ['YS(Mpa)', 'UTS(Mpa)', 'El(%)'], axis = 1), 
+                                                    hea_df[['YS(Mpa)', 'UTS(Mpa)', 'El(%)']], 
+                                                    test_size = 0.25, 
+                                                    random_state = 42)
+
+# display the shapes of training and testing datasets
+print("\nX-train shape: {}".format(X_train.shape))
+print("X-test shape: {}".format(X_test.shape))
+print("y-train shape: {}".format(y_train.shape))
+print("y-test shape: {}".format(y_test.shape))
+```
+
+## 6. Feature Scaling
+
+A second MinMaxScaler is created for the selected features. 
+
+This is an appropriate approach because the testing dataset should not influence the estimation of preprocessing parameters. The same fitted scaler can also later be used to transform new HEA data before making predictions.
+
+```python
+# get the names of selected input features 
+X_features2 = hea_df.drop(columns = ['YS(Mpa)', 'UTS(Mpa)', 'El(%)'], axis = 1).columns
+
+# create a min-max scaler 
+scaler2 = MinMaxScaler()
+
+# fit the scaler on training data and transform it 
+X_train[X_features2] = scaler2.fit_transform(X_train[X_features2])
+
+# transform testing data using the same scaler 
+X_test[X_features2] = scaler2.transform(X_test[X_features2])
+```
+
+## 7. Gradient Boosting Regression Model
+
+The main predictive model is GradientBoostingRegressor. Since the standard Gradient Boosting Regressor predicts a single target, the implementation wraps it using:
+
+MultiOutputRegressor(GradientBoostingRegressor())
+
+This produces separate Gradient Boosting regression models for the three target variables while maintaining a common multi-output prediction interface.
+
+Gradient Boosting is suitable for this application because the relationship between material descriptors and mechanical properties may be nonlinear. The model combines multiple weak regression models sequentially, with each successive estimator attempting to improve the errors made by the previous estimators.
+
+The base Gradient Boosting model is configured with random_state = 42.
+
+```python
+# create 5-fold cross validation 
+kfold = KFold(n_splits = 5, shuffle = True, random_state = 42)
+
+# create a multioutput gradient boosting model 
+gb_model = MultiOutputRegressor(GradientBoostingRegressor(random_state = 42))
+
+```
+
+## 8. Hyperparameter Optimisation
+
+GridSearchCV is used to determine an appropriate combination of Gradient Boosting hyperparameters.
+
+Each combination is evaluated using five-fold cross-validation, resulting in multiple model fits during the grid-search process.
+
+The optimisation criterion is negative mean squared error (neg_mean_squared_error). Because scikit-learn represents losses as negative scores when maximising a scoring metric, the grid search selects the configuration associated with the lowest mean squared error.
+
+The best hyperparameters and best cross-validation score are printed after the search. The resulting model is stored as best_model.
+
+```python
+# define hyperparameters for grid search 
+param_grid = {'estimator__n_estimators': [50, 100, 150, 200], 
+              'estimator__learning_rate': [0.1, 0.2, 0.3], 
+              'estimator__max_depth': [2, 3, 4]}
+
+# search for the best hyperparameter combination 
+grid_search = GridSearchCV(estimator = gb_model, 
+                           param_grid = param_grid, 
+                           cv = kfold, 
+                           scoring = 'neg_mean_squared_error', 
+                           n_jobs = 1, 
+                           verbose = 3, 
+                           return_train_score = True)
+
+# train models using grid search 
+grid_search.fit(X_train, y_train)
+
+# display the best hyperparameters 
+print("\nBest Parameters: ")
+print(grid_search.best_params_)
+
+# display the best cross validation scores 
+print("\nBest score:")
+print(grid_search.best_score_)
+
+# retrieve the best model 
+best_model = grid_search.best_estimator_
+```
+
+## 9. Model Evaluation
+
+After hyperparameter optimisation, the selected model is used to generate predictions for both the training and testing datasets.
+
+The predictions are separated into three individual outputs:
+
+- Yield Strength prediction
+- Ultimate Tensile Strength prediction
+- Elongation prediction
+
+Two evaluation metrics are calculated for each property.
+
+```python
+# generate predictions for training and testing sets 
+train_pred = best_model.predict(X_train)
+test_pred = best_model.predict(X_test)
+
+# extract yield strength, ultimate tensile strength, elongation train predictions
+train_pred_ys = train_pred[:, 0]
+train_pred_uts = train_pred[:, 1]
+train_pred_el = train_pred[:, 2]
+
+# extract yield strength, ultimate tensile strength, elongation test predictions
+test_pred_ys = test_pred[:, 0]
+test_pred_uts = test_pred[:, 1]
+test_pred_el = test_pred[:, 2]
+```
+
+## 10. R² Score
+
+The coefficient of determination, R², measures how well the predicted values explain the variation in the observed values.
+
+The code calculates separate R² values for the training and testing datasets. 
+
+A higher R² indicates stronger predictive agreement between the predicted and experimental values. The testing R² values are particularly important because they measure performance on observations that were not used directly for model fitting.
+
+```python
+# calculate training R2 scores 
+train_ys_r2 = r2_score(y_train['YS(Mpa)'], train_pred_ys)
+train_uts_r2 = r2_score(y_train['UTS(Mpa)'], train_pred_uts)
+train_el_r2 = r2_score(y_train['El(%)'], train_pred_el)
+
+# calculate testing R2 scores 
+test_ys_r2 = r2_score(y_test['YS(Mpa)'], test_pred_ys)
+test_uts_r2 = r2_score(y_test['UTS(Mpa)'], test_pred_uts)
+test_el_r2 = r2_score(y_test['El(%)'], test_pred_el)
+```
+
+## 11. Root Mean Square Error
+
+RMSE is calculated for each target variable using:
+
+RMSE = √MSE
+
+The code reports training and testing RMSE separately for YS, UTS, and elongation.
+
+Unlike R², RMSE is expressed in the same units as the target variable. Therefore:
+
+- YS RMSE is expressed in MPa.
+- UTS RMSE is expressed in MPa.
+- Elongation RMSE is expressed in percentage points.
+
+Lower RMSE values indicate smaller prediction errors.
+
+The program prints the resulting performance in a structured format for each mechanical property. However, the numerical output is not included in the uploaded source code, so the exact R² and RMSE values cannot be reported from the code alone.
+
+```python
+# calculate training RMSE scores 
+train_ys_rmse = np.sqrt(mean_squared_error(y_train['YS(Mpa)'], train_pred_ys))
+train_uts_rmse = np.sqrt(mean_squared_error(y_train['UTS(Mpa)'], train_pred_uts))
+train_el_rmse = np.sqrt(mean_squared_error(y_train['El(%)'], train_pred_el))
+
+# calculate testing RMSE scores 
+test_ys_rmse = np.sqrt(mean_squared_error(y_test['YS(Mpa)'], test_pred_ys))
+test_uts_rmse = np.sqrt(mean_squared_error(y_test['UTS(Mpa)'], test_pred_uts))
+test_el_rmse = np.sqrt(mean_squared_error(y_test['El(%)'], test_pred_el))
+```
+
+## 12. Prediction Visualisation
+
+The program generates three actual-versus-predicted scatter plots.
+
+The first plot compares experimental and predicted yield strength, followed by equivalent plots for ultimate tensile strength and elongation.
+
+For each plot:
+- Training observations are displayed separately from testing observations.
+- Actual values are placed on the x-axis.
+- Predicted values are placed on the y-axis.
+- R² and RMSE values are included in the plot legend.
+
+These plots provide a visual assessment of model performance. Points located close to an ideal diagonal relationship between actual and predicted values would indicate good predictive agreement. The separation between training and testing points can also provide an indication of potential overfitting.
+
+## 13. Model Deployment and Reproducibility
+
+The final optimised model and feature scaler are saved using Joblib:
+
+- best_model.joblib
+- scaler.joblib
+
+Saving these objects allows the trained model to be reused without repeating the complete training process. For future HEA compositions, the same feature preprocessing procedure can be applied using the saved scaler, after which the saved model can generate predictions for YS, UTS, and elongation.
+
+This provides a foundation for integrating the model into a materials informatics application, such as a Streamlit interface or an automated prediction pipeline.
+
+```python
+# save model and scaler
+joblib.dump(best_model, "best_model.joblib")
+joblib.dump(scaler2, "scaler.joblib")
+```
 
 ## References
 [1] Wang, J., Kwon, H., Kim, H. S., & Lee, B.-J. (2023). A neural network model for high entropy alloy design. Npj Computational Materials, 9(1). https://doi.org/10.1038/s41524-023-01010-x
