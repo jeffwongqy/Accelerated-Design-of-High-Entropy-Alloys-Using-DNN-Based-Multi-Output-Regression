@@ -375,6 +375,12 @@ The containerised approach separates the application environment from the host o
 
 <img width="1917" height="1016" alt="docker_container_app" src="https://github.com/user-attachments/assets/62516aed-4dc5-4f85-98ce-55ff111f5e9d" />
 
+<img width="1917" height="1017" alt="training_bash1" src="https://github.com/user-attachments/assets/2982ff98-e953-4d7f-ac6b-418a3274377e" />
+
+<img width="1917" height="1015" alt="training_bash" src="https://github.com/user-attachments/assets/39516407-f9d6-4a50-8524-0b25006bea35" />
+
+
+
 ## 16. Streamlit Application 
 A Streamlit application was developed to provide a simple user interface for the machine learning model. Instead of requiring users to execute the Python training script directly, the application provides an interactive platform for entering or selecting the required HEA material descriptors and obtaining predicted mechanical properties.
 
