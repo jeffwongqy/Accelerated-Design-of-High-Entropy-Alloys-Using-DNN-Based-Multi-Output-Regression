@@ -3,7 +3,7 @@
 #### _A*STAR Institute of High Performance Computing (IHPC) ARIA Internship Project on Materials Informatics 2024_
 
 
-# Docker-Based Deployment for Machine Learning on HEA Mechanical Properties
+# Docker-Based Deployment for ML on High-Entropy Alloys
 
 <img width="1000" height="450" alt="high-entropy-alloy" src="https://github.com/user-attachments/assets/af119e96-8726-4e78-9171-e030379ffdb6" />
 
